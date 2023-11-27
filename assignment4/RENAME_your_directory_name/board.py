@@ -10,7 +10,7 @@ Implements a basic Go board with functions to:
 
 The board uses a 1-dimensional representation with padding
 """
-
+#TEST
 import numpy as np
 from typing import List, Tuple
 
