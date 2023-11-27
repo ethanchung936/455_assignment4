@@ -316,3 +316,6 @@ class GoBoard(object):
 
     def test(self):
         pass
+    
+    def fake(self):
+        pass

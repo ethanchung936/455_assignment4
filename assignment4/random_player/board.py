@@ -313,6 +313,3 @@ class GoBoard(object):
         state += str(self.black_captures)
         state += str(self.white_captures)
         return state
-
-    def fake_test(self):
-        pass
