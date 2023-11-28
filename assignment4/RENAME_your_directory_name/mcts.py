@@ -11,6 +11,7 @@ from gtp_connection import point_to_coord, format_point
 import numpy as np
 import os, sys
 from typing import Dict, List, Tuple
+import time
 
 def uct(child_wins: int, child_visits: int, parent_visits: int, exploration: float) -> float:
     return child_wins / child_visits + exploration * np.sqrt(np.log(parent_visits) / child_visits)
@@ -145,21 +146,20 @@ class MCTS:
         self,
         board: GoBoard,
         color: GO_COLOR,
-        limit: int,
+        time_limit: int,
         use_pattern: bool,
-        num_simulation: int,
         exploration: float,
         in_tree_knowledge: bool,
     ) -> GO_POINT:
         """
         Runs all playouts sequentially and returns the most visited move.
         """
+        self.solve_start_time = time.time()
         if self.toplay != color:
             sys.stderr.write("Tree is for wrong color to play. Deleting.\n")
             sys.stderr.flush()
             self.toplay = color
             self.root = TreeNode(color)
-        self.limit = limit
         self.use_pattern = use_pattern
         self.exploration = exploration
         self.in_tree_knowledge = in_tree_knowledge
@@ -167,9 +167,16 @@ class MCTS:
         if not self.root.expanded:
             self.root.expand(board, color)
 
-        for _ in range(num_simulation*len(self.root.children)):
+        while time.time() - self.solve_start_time < (time_limit - 0.01):
             cboard = board.copy()
             self.search(cboard, color)
+
+    # This is the old number of simulations based code
+        # for _ in range(num_simulation*len(self.root.children)):
+        #     cboard = board.copy()
+        #     self.search(cboard, color)
+        
+        
         # choose a move that has the most visit
         best_move, best_child = self.root.select_best_child()
         return best_move
