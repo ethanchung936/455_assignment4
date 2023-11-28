@@ -359,9 +359,12 @@ class GtpConnection:
         """ 
         Modify this function for Assignment 2.
         """
-
         board_color = args[0].lower()
-        self.play_cmd([board_color, self.engine.get_move(self.board, board_color), 'print_move'])
+        if board_color not in {"b", "w"}:
+            self.respond("invalid color")
+            return
+        color = color_to_int(board_color)
+        self.play_cmd([board_color, self.engine.get_move(self.board, color), 'print_move'])
     
     def timelimit_cmd(self, args: List[str]) -> None:
         """ Implement this function for Assignment 2 """
