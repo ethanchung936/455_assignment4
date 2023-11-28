@@ -134,12 +134,12 @@ class MCTS:
         """
         # TODO: test the speed of this vs the speed when using copy and undo
         while True:
-            moves: np.ndarray[GO_POINT] = board.get_empty_points()
-            np.random.shuffle(moves)
-            board.play_move(moves[0], board.current_player)
             terminal, winner = board.is_terminal()
             if terminal:
                 return winner        
+            moves: np.ndarray[GO_POINT] = board.get_empty_points()
+            np.random.shuffle(moves)
+            board.play_move(moves[0], board.current_player)
     
     def get_move(
         self,
