@@ -166,6 +166,7 @@ class GtpConnection:
         Reset the board to empty board of given size
         """
         self.board.reset(size)
+        self.engine.reset()
 
     def board2d(self) -> str:
         return str(GoBoardUtil.get_twoD_board(self.board))
@@ -190,6 +191,7 @@ class GtpConnection:
     def clear_board_cmd(self, args: List[str]) -> None:
         """ clear the board """
         self.reset(self.board.size)
+        self.engine.reset()
         self.respond()
 
     def boardsize_cmd(self, args: List[str]) -> None:
@@ -197,6 +199,7 @@ class GtpConnection:
         Reset the game with new boardsize args[0]
         """
         self.reset(int(args[0]))
+        self.engine.reset()
         self.respond()
 
     def showboard_cmd(self, args: List[str]) -> None:
