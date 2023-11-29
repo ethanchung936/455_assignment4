@@ -346,7 +346,7 @@ class GoBoard(object):
             elif self.board[neighbor] == EMPTY and count < 4:
                 neighbor = self._neighbors(neighbor)[i]
                 #Check for decay
-                if neighbor == opp_color():
+                if neighbor == opp_color:
                     decay = 0.9 
                 elif self.board[neighbor] == color:
                     decay = 0.9
@@ -356,7 +356,7 @@ class GoBoard(object):
                         if count >= 5:
                             count -= 1
                             break
-                    if self.board[neighbor] == opp_color():
+                    if self.board[neighbor] == opp_color:
                         closed += 1
         
         print(self.compute_line_heuristic(count, decay, closed))

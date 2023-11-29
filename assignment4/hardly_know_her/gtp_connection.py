@@ -73,7 +73,8 @@ class GtpConnection:
             "gogui-rules_board": self.gogui_rules_board_cmd,
             "gogui-analyze_commands": self.gogui_analyze_cmd,
             "timelimit": self.timelimit_cmd,
-            "solve": self.solve_cmd
+            "solve": self.solve_cmd,
+            "heuristic": self.test_heuristic
         }
 
         # argmap is used for argument checking
@@ -381,6 +382,13 @@ class GtpConnection:
             self.respond(winner)
         else:
             self.respond(winner + " " + winning_move)
+
+    def test_heuristic(self, args):
+            board_color = args[0].lower()
+            coord = move_to_coord(args[1], self.board.size)
+            move = coord_to_point(coord[0], coord[1], self.board.size)
+            color = color_to_int(board_color)
+            heuristic = self.board.heuristic_lines(move, color)
 
 def point_to_coord(point: GO_POINT, boardsize: int) -> Tuple[int, int]:
     """
