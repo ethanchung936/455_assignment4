@@ -215,9 +215,9 @@ class GoBoard(object):
     def _diag_neighbors(self, point: GO_POINT) -> List:
         """ List of all four diagonal neighbors of point """
         return [point - self.NS - 1,
+                point + self.NS + 1,
                 point - self.NS + 1,
-                point + self.NS - 1,
-                point + self.NS + 1]
+                point + self.NS - 1]
 
     def last_board_moves(self) -> List:
         """
@@ -313,3 +313,62 @@ class GoBoard(object):
         state += str(self.black_captures)
         state += str(self.white_captures)
         return state
+
+    def compute_heuristic(self):
+        pass
+
+    def heuristic_lines(self, point, color):
+        """ point: point on board where we start check from
+            color: color whose heuristic we are evaluating for
+        """
+        heuristic = 0
+        count = 1
+        opp_color = opponent(color)
+        neighbors = self._neighbors(point)
+        for i, nb in enumerate(neighbors):
+            #Checks neighbors from W-E and N-S
+            if i % 2 == 0:
+                #Reset count after checking EW and NS
+                if count > 1:
+                    heuristic += self.compute_line_heuristic(count, decay, closed)
+                    print(heuristic)
+                count = 1
+                closed = 0
+                decay = 1
+            neighbor = nb
+            while self.board[neighbor] == color:
+                count += 1
+                if count == 5:
+                    break
+                neighbor = self._neighbors(neighbor)[i]
+            if self.board[neighbor] == opp_color():
+                closed += 1
+            elif self.board[neighbor] == EMPTY and count < 4:
+                neighbor = self._neighbors(neighbor)[i]
+                #Check for decay
+                if neighbor == opp_color():
+                    decay = 0.9 
+                elif self.board[neighbor] == color:
+                    decay = 0.9
+                    while self.board[neighbor] == color:
+                        count += 1
+                        neighbor = self._neighbors(neighbor)[i]
+                        if count >= 5:
+                            count -= 1
+                            break
+                    if self.board[neighbor] == opp_color():
+                        closed += 1
+        
+        print(self.compute_line_heuristic(count, decay, closed))
+        heuristic += self.compute_line_heuristic(count, decay, closed)
+        return heuristic
+
+    def compute_line_heuristic(self, count, decay, closed):
+        if count >= 5:
+            return 10 ** 5
+        elif closed == 0:
+            return (10 ** count) * decay
+        elif closed == 1 and count != 2:
+            return (10 ** (count - 1)) * decay
+        else:
+            return 0
