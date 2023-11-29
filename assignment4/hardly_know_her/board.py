@@ -163,24 +163,24 @@ class GoBoard(object):
         self.last_move = point
         O = opponent(color)
         offsets = [1, -1, self.NS, -self.NS, self.NS+1, -(self.NS+1), self.NS-1, -self.NS+1]
-        bcs = []
-        wcs = []
+        # bcs = []
+        # wcs = []
         for offset in offsets:
             if self.board[point+offset] == O and self.board[point+(offset*2)] == O and self.board[point+(offset*3)] == color:
                 self.board[point+offset] = EMPTY
                 self.board[point+(offset*2)] = EMPTY
                 if color == BLACK:
                     self.black_captures += 2
-                    bcs.append(point+offset)
-                    bcs.append(point+(offset*2))
+                    # bcs.append(point+offset)
+                    # bcs.append(point+(offset*2))
                 else:
                     self.white_captures += 2
-                    wcs.append(point+offset)
-                    wcs.append(point+(offset*2))
-        self.depth += 1
-        self.black_capture_history.append(bcs)
-        self.white_capture_history.append(wcs)
-        self.move_history.append(point)
+        #             wcs.append(point+offset)
+        #             wcs.append(point+(offset*2))
+        # self.depth += 1
+        # self.black_capture_history.append(bcs)
+        # self.white_capture_history.append(wcs)
+        # self.move_history.append(point)
         return True
     
     def undo(self):
