@@ -3,11 +3,15 @@ import pexpect
 #Change the paths here to test different players
 # player1='random_player/Ninuki-random.py'
 player1='ab_player/Ninuki-ab.py'
-player2='RENAME_your_directory_name/Ninuki.py'
+# player1='hardly_know_her/Ninuki.py'
+
+# player2='random_player/Ninuki-random.py'
+# player2='ab_player/Ninuki-ab.py'
+player2='hardly_know_her/Ninuki.py'
 
 #Change the timeout to test different time limits
 #We will use a 60 second timeout for testing your submission
-timeout=3
+timeout= 1
 
 #Change the number of games played by the script
 numGames = 10
