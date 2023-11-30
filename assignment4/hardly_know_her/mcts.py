@@ -13,8 +13,8 @@ import os, sys
 from typing import Dict, List, Tuple
 import time
 
-def uct(child_wins: int, child_visits: int, parent_visits: int, exploration: float) -> float:
-    return child_wins / child_visits + exploration * np.sqrt(np.log(parent_visits) / child_visits)
+def uct(child_wins: int, child_visits: int, parent_visits: int, exploration: float, heuristic: float) -> float:
+    return child_wins / child_visits + exploration * np.sqrt(np.log(parent_visits) / child_visits)  + heuristic
 
 class TreeNode:
     """
@@ -50,7 +50,7 @@ class TreeNode:
         # self.children[PASS] = node
         self.expanded = True
     
-    def select_in_tree(self, exploration: float) -> Tuple[GO_POINT, 'TreeNode']:
+    def select_in_tree(self, exploration: float, board: GoBoard) -> Tuple[GO_POINT, 'TreeNode']:
         """
         Select move among children that gives maximizes UCT. 
         If number of visits are zero for a node, value for that node is infinite, so definitely will get selected
@@ -64,7 +64,8 @@ class TreeNode:
         for move, child in self.children.items():
             if child.n_visits == 0:
                 return child.move, child
-            uct_val = uct(child.n_opp_wins, child.n_visits, self.n_visits, exploration)
+            heuristic = board.compute_confront_heuristic(child.move, child.color)
+            uct_val = uct(child.n_opp_wins, child.n_visits, self.n_visits, exploration, heuristic)
             if uct_val > _uct_val:
                 _uct_val = uct_val
                 _child = child
@@ -116,7 +117,7 @@ class MCTS:
         if not node.expanded:
             node.expand(board, color)
         while not node.is_leaf():
-            move, next_node = node.select_in_tree(self.exploration)
+            move, next_node = node.select_in_tree(self.exploration, board)
             x = board.play_move(move, color)
             assert x, "x is {}, move is {}, color is {}".format(x, move, color)
             color = opponent(color)

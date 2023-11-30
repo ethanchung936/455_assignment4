@@ -215,9 +215,9 @@ class GoBoard(object):
     def _diag_neighbors(self, point: GO_POINT) -> List:
         """ List of all four diagonal neighbors of point """
         return [point - self.NS - 1,
+                point + self.NS + 1,
                 point - self.NS + 1,
-                point + self.NS - 1,
-                point + self.NS + 1]
+                point + self.NS - 1]
 
     def last_board_moves(self) -> List:
         """
@@ -313,3 +313,140 @@ class GoBoard(object):
         state += str(self.black_captures)
         state += str(self.white_captures)
         return state
+
+    def compute_confront_heuristic(self, point, color):
+        player_heuristic = self.heuristic_lines(point, color) + self.capture_heuristic(point, color)
+        opp_heuristic = self.heuristic_lines(point, opponent(color)) + self.capture_heuristic(point, opponent(color))
+        beta = 1/6
+        # print(f"player: {player_heuristic} | opp: {opp_heuristic}")
+        heuristic =  (beta * player_heuristic) + (((1-beta) * opp_heuristic) / 10) 
+        return heuristic
+
+    def heuristic_lines(self, point, color):
+        """ point: point on board where we start check from
+            color: color whose heuristic we are evaluating for
+        """
+        heuristic = 0
+        count = 1
+        opp_color = opponent(color)
+        neighbors = self._neighbors(point)
+        for i, nb in enumerate(neighbors):
+            #Checks neighbors from W-E and N-S
+            if i % 2 == 0:
+                #Reset count after checking EW and NS
+                if count > 1:
+                    heuristic += self.compute_line_heuristic(count, decay, closed)
+                    # print(self.compute_line_heuristic(count, decay, closed))
+                count = 1
+                closed = 0
+                decay = 1
+            neighbor = nb
+            while self.board[neighbor] == color:
+                count += 1
+                if count == 5:
+                    break
+                neighbor = self._neighbors(neighbor)[i]
+            if self.board[neighbor] != EMPTY:
+                closed += 1
+            elif self.board[neighbor] == EMPTY and count < 4:
+                neighbor = self._neighbors(neighbor)[i]
+                #Check for decay
+                if neighbor == opp_color:
+                    decay = 0.9 
+                elif self.board[neighbor] == color:
+                    decay = 0.9
+                    while self.board[neighbor] == color:
+                        count += 1
+                        neighbor = self._neighbors(neighbor)[i]
+                        if count >= 5:
+                            count -= 1
+                            break
+                    if self.board[neighbor] != EMPTY:
+                        closed += 1
+        
+        if count > 1:
+            # print(self.compute_line_heuristic(count, decay, closed))
+            heuristic += self.compute_line_heuristic(count, decay, closed)
+
+        #Diagonals
+        count = 1
+        neighbors = self._diag_neighbors(point)
+        for i, nb in enumerate(neighbors):
+            #Checks neighbors from W-E and N-S
+            if i % 2 == 0:
+                #Reset count after checking EW and NS
+                if count > 1:
+                    heuristic += self.compute_line_heuristic(count, decay, closed)
+                    # print(self.compute_line_heuristic(count, decay, closed))
+                count = 1
+                closed = 0
+                decay = 1
+            neighbor = nb
+            while self.board[neighbor] == color:
+                count += 1
+                if count == 5:
+                    break
+                neighbor = self._diag_neighbors(neighbor)[i]
+            if self.board[neighbor] != EMPTY:
+                closed += 1
+            elif self.board[neighbor] == EMPTY and count < 4:
+                neighbor = self._diag_neighbors(neighbor)[i]
+                #Check for decay
+                if neighbor == opp_color:
+                    decay = 0.9 
+                elif self.board[neighbor] == color:
+                    decay = 0.9
+                    while self.board[neighbor] == color:
+                        count += 1
+                        neighbor = self._diag_neighbors(neighbor)[i]
+                        if count >= 5:
+                            count -= 1
+                            break
+                    if self.board[neighbor] != EMPTY:
+                        closed += 1
+        
+        if count > 1:
+            # print(self.compute_line_heuristic(count, decay, closed))
+            heuristic += self.compute_line_heuristic(count, decay, closed)
+        return heuristic
+
+    def compute_line_heuristic(self, count, decay, closed):
+        # print(f"count: {count} | decay: {decay} | closed: {closed}")
+        if count >= 5:
+            return 10 ** 5
+        elif closed == 0:
+            return (10 ** count) * decay
+        elif closed == 1 and count != 2:
+            return (10 ** (count - 1)) * decay
+        else:
+            return 0
+        
+    def capture_heuristic(self, point, color):
+        heuristic = 0
+        captures = 0
+        O = opponent(color)
+        offsets = [1, -1, self.NS, -self.NS, self.NS+1, -(self.NS+1), self.NS-1, -self.NS+1]
+        for offset in offsets:
+            if self.board[point+offset] == O and self.board[point+(offset*2)] == O and self.board[point+(offset*3)] == color:
+                captures += 2
+
+        if captures > 0:
+            heuristic += self.compute_capture_heuristic(color, captures)
+
+        # print(f"capture heuristic:{heuristic}")
+        return heuristic
+
+    def compute_capture_heuristic(self, color, new_captures):
+        if color == BLACK:
+            if new_captures + self.black_captures > 10:
+                return 10**5
+            else:
+                return 10 ** ((self.black_captures + new_captures) / 2)
+        else:
+            if new_captures + self.white_captures > 10:
+                return 10**5
+            else:
+                return 10 ** ((self.white_captures + new_captures) / 2)
+        
+        
+
