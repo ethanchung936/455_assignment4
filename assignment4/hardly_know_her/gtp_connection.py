@@ -388,7 +388,8 @@ class GtpConnection:
             coord = move_to_coord(args[1], self.board.size)
             move = coord_to_point(coord[0], coord[1], self.board.size)
             color = color_to_int(board_color)
-            heuristic = self.board.heuristic_lines(move, color)
+            heuristic = self.board.capture_heuristic(move, color)
+            self.respond(heuristic)
 
 def point_to_coord(point: GO_POINT, boardsize: int) -> Tuple[int, int]:
     """
