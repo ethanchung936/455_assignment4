@@ -13,8 +13,8 @@ import os, sys
 from typing import Dict, List, Tuple
 import time
 
-def uct(child_wins: int, child_visits: int, parent_visits: int, exploration: float) -> float:
-    return child_wins / child_visits + exploration * np.sqrt(np.log(parent_visits) / child_visits)
+def uct(child_wins: int, child_visits: int, parent_visits: int, exploration: float, heuristic: float) -> float:
+    return child_wins / child_visits + exploration * np.sqrt(np.log(parent_visits) / child_visits)  + heuristic
 
 class TreeNode:
     """
@@ -64,7 +64,8 @@ class TreeNode:
         for move, child in self.children.items():
             if child.n_visits == 0:
                 return child.move, child
-            uct_val = uct(child.n_opp_wins, child.n_visits, self.n_visits, exploration)
+            heuristic = self.board.compute_confront_heuristic(child.move, child.color)
+            uct_val = uct(child.n_opp_wins, child.n_visits, self.n_visits, exploration, heuristic)
             if uct_val > _uct_val:
                 _uct_val = uct_val
                 _child = child
