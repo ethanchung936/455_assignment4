@@ -317,6 +317,10 @@ class GoBoard(object):
     def compute_confront_heuristic(self, point, color):
         player_heuristic = self.heuristic_lines(point, color) + self.capture_heuristic(point, color)
         opp_heuristic = self.heuristic_lines(point, opponent(color)) + self.capture_heuristic(point, opponent(color))
+        beta = 1/6
+        # print(f"player: {player_heuristic} | opp: {opp_heuristic}")
+        heuristic =  (beta * player_heuristic) + (((1-beta) * opp_heuristic) / 10) 
+        return heuristic
 
     def heuristic_lines(self, point, color):
         """ point: point on board where we start check from
@@ -332,7 +336,7 @@ class GoBoard(object):
                 #Reset count after checking EW and NS
                 if count > 1:
                     heuristic += self.compute_line_heuristic(count, decay, closed)
-                    print(self.compute_line_heuristic(count, decay, closed))
+                    # print(self.compute_line_heuristic(count, decay, closed))
                 count = 1
                 closed = 0
                 decay = 1
@@ -342,7 +346,7 @@ class GoBoard(object):
                 if count == 5:
                     break
                 neighbor = self._neighbors(neighbor)[i]
-            if self.board[neighbor] == opp_color:
+            if self.board[neighbor] != EMPTY:
                 closed += 1
             elif self.board[neighbor] == EMPTY and count < 4:
                 neighbor = self._neighbors(neighbor)[i]
@@ -361,7 +365,7 @@ class GoBoard(object):
                         closed += 1
         
         if count > 1:
-            print(self.compute_line_heuristic(count, decay, closed))
+            # print(self.compute_line_heuristic(count, decay, closed))
             heuristic += self.compute_line_heuristic(count, decay, closed)
 
         #Diagonals
@@ -373,7 +377,7 @@ class GoBoard(object):
                 #Reset count after checking EW and NS
                 if count > 1:
                     heuristic += self.compute_line_heuristic(count, decay, closed)
-                    print(self.compute_line_heuristic(count, decay, closed))
+                    # print(self.compute_line_heuristic(count, decay, closed))
                 count = 1
                 closed = 0
                 decay = 1
@@ -383,7 +387,7 @@ class GoBoard(object):
                 if count == 5:
                     break
                 neighbor = self._diag_neighbors(neighbor)[i]
-            if self.board[neighbor] == opp_color:
+            if self.board[neighbor] != EMPTY:
                 closed += 1
             elif self.board[neighbor] == EMPTY and count < 4:
                 neighbor = self._diag_neighbors(neighbor)[i]
@@ -402,12 +406,12 @@ class GoBoard(object):
                         closed += 1
         
         if count > 1:
-            print(self.compute_line_heuristic(count, decay, closed))
+            # print(self.compute_line_heuristic(count, decay, closed))
             heuristic += self.compute_line_heuristic(count, decay, closed)
         return heuristic
 
     def compute_line_heuristic(self, count, decay, closed):
-        print(f"count: {count} | decay: {decay} | closed: {closed}")
+        # print(f"count: {count} | decay: {decay} | closed: {closed}")
         if count >= 5:
             return 10 ** 5
         elif closed == 0:
@@ -429,7 +433,7 @@ class GoBoard(object):
         if captures > 0:
             heuristic += self.compute_capture_heuristic(color, captures)
 
-        print(heuristic)
+        # print(f"capture heuristic:{heuristic}")
         return heuristic
 
     def compute_capture_heuristic(self, color, new_captures):
