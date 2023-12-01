@@ -53,7 +53,6 @@ class A4SubmissionPlayer(GoEngine):
         coord = point_to_coord(point, board.size)
         move = format_point(coord)
         self.MCTS.print_pi(board)
-        self.update(board, move)
         return move
 
     def set_time_limit(self, time_limit):
