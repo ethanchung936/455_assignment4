@@ -49,7 +49,10 @@ class A4SubmissionPlayer(GoEngine):
         """
         Implement for assignment 4
         """
-        point = self.MCTS.get_move(board, color, self.time_limit, True, np.sqrt(2), True)
+        exploration = 0.4
+        heuristic_weight = 1
+        
+        point = self.MCTS.get_move(board, color, self.time_limit, exploration, heuristic_weight)
         coord = point_to_coord(point, board.size)
         move = format_point(coord)
         self.MCTS.print_pi(board)
