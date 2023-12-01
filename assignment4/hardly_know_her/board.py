@@ -448,5 +448,107 @@ class GoBoard(object):
             else:
                 return 10 ** ((self.white_captures + new_captures) / 2)
         
+    
+
+    def get_rule_moves(self, color):
+        legal_moves = self.get_empty_points()
+        rule_moves = {'Win': [], 'BlockWin': [], 'OpenFour': [], 'OpenThree': [], 'Capture': [], 'Middle': [], 'Other': []}
+        opp_color = opponent(color)
+
+        for move in legal_moves:
+            #Check for win
+            self.play_move(move, color)
+            terminal, winner = self.is_terminal()
+            self.undo()
+            if terminal and winner == color:
+                rule_moves['Win'].append(move)
+                continue
+
+            #Check for block win
+            self.play_move(move, opp_color)
+            terminal, winner = self.is_terminal()
+            self.undo()
+            if terminal and winner == opp_color:
+                rule_moves['BlockWin'].append(move)
+                continue
+
+            #Check for Open4/3
+            num = self.get_open_3_or_4(move, color)
+            if num == 3:
+                rule_moves['OpenThree'].append(move)
+                continue
+            elif num == 4:
+                rule_moves['OpenFour'].append(move)
+                continue
+
+            #Check for capture
+            if self.is_captured(move, color):
+                rule_moves['Capture'].append(move)
+                continue
+
+            #Check if move is a middle square
+            if self.is_in_middle(move):
+                rule_moves['Middle'].append(move)
+                continue
+
+            rule_moves['Other'].append(move)
         
+        return rule_moves
+
+
+    def get_open_3_or_4(self, point, color):
+        neighbors = self._neighbors(point)
+        max_count = 1
+        for i, nb in enumerate(neighbors):
+            if i % 2 == 0:
+                count = 1
+                closed = False
+            if closed:
+                continue
+            neighbor = nb
+            while self.board[neighbor] == color:
+                count += 1
+                neighbor = self._neighbors(neighbor)[i]
+            if self.board[neighbor] != EMPTY:
+                closed = True
+            if max(max_count, count) > max_count:
+                max_count = count
+                if max_count == 4:
+                    return 4
+               
+        neighbors = self._diag_neighbors(point)
+        for i, nb in enumerate(neighbors):
+            if i % 2 == 0:
+                count = 1
+                closed = False
+            if closed:
+                continue
+            neighbor = nb
+            while self.board[neighbor] == color:
+                count += 1
+                neighbor = self._diag_neighbors(neighbor)[i]
+            if self.board[neighbor] != EMPTY:
+                closed = True
+            if max(max_count, count) > max_count:
+                max_count = count
+                if max_count == 4:
+                    return 4
+
+        return max_count
+    
+    def is_captured(self, point, color):
+        O = opponent(color)
+        offsets = [1, -1, self.NS, -self.NS, self.NS+1, -(self.NS+1), self.NS-1, -self.NS+1]
+        for offset in offsets:
+            if self.board[point+offset] == O and self.board[point+(offset*2)] == O and self.board[point+(offset*3)] == color:
+                return True
+        return False
+    
+    def is_in_middle(self, point):
+        middle = [27,28,29,35,36,37,43,44,45]
+        if point in middle:
+            return True
+        else:
+            return False
+
 

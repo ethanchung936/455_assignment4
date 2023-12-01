@@ -75,7 +75,8 @@ class GtpConnection:
             "timelimit": self.timelimit_cmd,
             "solve": self.solve_cmd,
             "heuristic_move": self.test_heuristic,
-            "heuristic": self.test_heuristic_moves
+            "heuristic": self.test_heuristic_moves,
+            "policy": self.rule_moves
 
         }
 
@@ -407,6 +408,14 @@ class GtpConnection:
 
         heuristics = sorted(heuristics.items(), key=lambda x: x[1], reverse=True)
         self.respond(heuristics)
+
+    def rule_moves(self, args):
+        board_color = args[0].lower()
+        color = color_to_int(board_color)
+        rule_moves = self.board.get_rule_moves(color)
+        self.respond(rule_moves)
+        
+
 
 def point_to_coord(point: GO_POINT, boardsize: int) -> Tuple[int, int]:
     """
