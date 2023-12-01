@@ -26,6 +26,7 @@ class TreeNode:
         self.color: GO_COLOR = color
         self.n_visits: int = 0
         self.n_opp_wins: int = 0
+        self.h_val: int = None
         self.parent: 'TreeNode' = self
         self.children: Dict[TreeNode] = {}
         self.expanded: bool = False
@@ -64,8 +65,9 @@ class TreeNode:
         for move, child in self.children.items():
             if child.n_visits == 0:
                 return child.move, child
-            heuristic = board.compute_confront_heuristic(child.move, child.color)
-            uct_val = uct(child.n_opp_wins, child.n_visits, self.n_visits, exploration, heuristic, heuristic_weight)
+            if child.h_val == None:
+                child.h_val = board.compute_confront_heuristic(child.move, child.color)
+            uct_val = uct(child.n_opp_wins, child.n_visits, self.n_visits, exploration, child.h_val, heuristic_weight)
             if uct_val > _uct_val:
                 _uct_val = uct_val
                 _child = child
@@ -134,7 +136,6 @@ class MCTS:
         Use the rollout policy to play until the end of the game, returning the winner of the game
         +1 if black wins, +2 if white wins, 0 if it is a tie.
         """
-        # TODO: test the speed of this vs the speed when using copy and undo
         while True:
             terminal, winner = board.is_terminal()
             if terminal:
