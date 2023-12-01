@@ -168,7 +168,7 @@ class MCTS:
         if not self.root.expanded:
             self.root.expand(board, color)
 
-        while time.time() - self.solve_start_time < (time_limit - 0.01):
+        while time.time() - self.solve_start_time < (time_limit - 0.05): # TODO: make the time margin of error bigger (or adjust to be correct)
             cboard = board.copy()
             self.search(cboard, color)
 
