@@ -25,7 +25,7 @@ class TreeNode:
         self.move: GO_POINT = NO_POINT
         self.color: GO_COLOR = color
         self.n_visits: int = 0
-        self.n_opp_wins: int = 0
+        self.n_opp_wins: float = 0
         self.h_val: int = None
         self.parent: 'TreeNode' = self
         self.children: Dict[TreeNode] = {}
@@ -84,6 +84,7 @@ class TreeNode:
     
     def update(self, winner: GO_COLOR) -> None:
         self.n_opp_wins += self.color != winner
+        self.n_opp_wins += (winner == 0) / 2
         self.n_visits += 1
         if not self.is_root():
             self.parent.update(winner)
@@ -167,7 +168,7 @@ class MCTS:
         if not self.root.expanded:
             self.root.expand(board, color)
 
-        while time.time() - self.solve_start_time < (time_limit - 0.05): # TODO: make the time margin of error bigger (or adjust to be correct)
+        while time.time() - self.solve_start_time < (time_limit - 0.03): # TODO: make the time margin of error bigger (or adjust to be correct)
             cboard = board.copy()
             self.search(cboard, color)
 
