@@ -13,9 +13,13 @@ import os, sys
 from typing import Dict, List, Tuple
 import time
 
-def uct(child_wins: int, child_visits: int, parent_visits: int, exploration: float, heuristic: float, heuristic_weight: float) -> float:
-    return child_wins / child_visits + exploration * np.sqrt(np.log(parent_visits) / child_visits) + ((heuristic_weight / (child_visits + 1)) * heuristic)
+# Original uct
+# def uct(child_wins: int, child_visits: int, parent_visits: int, exploration: float, heuristic: float, heuristic_weight: float) -> float:
+#     return child_wins / child_visits + exploration * np.sqrt(np.log(parent_visits) / child_visits) + ((heuristic_weight / (child_visits + 1)) * heuristic)
 
+# Simplified uct
+def uct(child_wins: int, child_visits: int, parent_visits: int, exploration: float, heuristic: float, heuristic_weight: float) -> float:
+    return child_wins / child_visits + exploration / (child_visits + 1) + ((heuristic_weight / (child_visits + 1)) * heuristic)
 class TreeNode:
     """
     A node in the MCTS tree
