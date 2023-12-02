@@ -13,9 +13,13 @@ import os, sys
 from typing import Dict, List, Tuple
 import time
 
-def uct(child_wins: int, child_visits: int, parent_visits: int, exploration: float, heuristic: float) -> float:
-    return child_wins / child_visits + exploration * np.sqrt(np.log(parent_visits) / child_visits)  + heuristic
+# Original uct
+# def uct(child_wins: int, child_visits: int, parent_visits: int, exploration: float, heuristic: float, heuristic_weight: float) -> float:
+#     return child_wins / child_visits + exploration * np.sqrt(np.log(parent_visits) / child_visits) + ((heuristic_weight / (child_visits + 1)) * heuristic)
 
+# Simplified uct
+def uct(child_wins: int, child_visits: int, parent_visits: int, exploration: float, heuristic: float, heuristic_weight: float) -> float:
+    return child_wins / child_visits + exploration / (child_visits + 1) + ((heuristic_weight / (child_visits + 1)) * heuristic)
 class TreeNode:
     """
     A node in the MCTS tree
@@ -25,7 +29,8 @@ class TreeNode:
         self.move: GO_POINT = NO_POINT
         self.color: GO_COLOR = color
         self.n_visits: int = 0
-        self.n_opp_wins: int = 0
+        self.n_opp_wins: float = 0
+        self.h_val: int = None
         self.parent: 'TreeNode' = self
         self.children: Dict[TreeNode] = {}
         self.expanded: bool = False
@@ -50,7 +55,7 @@ class TreeNode:
         # self.children[PASS] = node
         self.expanded = True
     
-    def select_in_tree(self, exploration: float, board: GoBoard) -> Tuple[GO_POINT, 'TreeNode']:
+    def select_in_tree(self, exploration: float, heuristic_weight: float, board: GoBoard) -> Tuple[GO_POINT, 'TreeNode']:
         """
         Select move among children that gives maximizes UCT. 
         If number of visits are zero for a node, value for that node is infinite, so definitely will get selected
@@ -64,8 +69,9 @@ class TreeNode:
         for move, child in self.children.items():
             if child.n_visits == 0:
                 return child.move, child
-            heuristic = board.compute_confront_heuristic(child.move, child.color)
-            uct_val = uct(child.n_opp_wins, child.n_visits, self.n_visits, exploration, heuristic)
+            if child.h_val == None:
+                child.h_val = board.compute_confront_heuristic(child.move, child.color)
+            uct_val = uct(child.n_opp_wins, child.n_visits, self.n_visits, exploration, child.h_val, heuristic_weight)
             if uct_val > _uct_val:
                 _uct_val = uct_val
                 _child = child
@@ -82,6 +88,7 @@ class TreeNode:
     
     def update(self, winner: GO_COLOR) -> None:
         self.n_opp_wins += self.color != winner
+        self.n_opp_wins -= (winner == 0) / 2
         self.n_visits += 1
         if not self.is_root():
             self.parent.update(winner)
@@ -117,15 +124,13 @@ class MCTS:
         if not node.expanded:
             node.expand(board, color)
         while not node.is_leaf():
-            move, next_node = node.select_in_tree(self.exploration, board)
+            move, next_node = node.select_in_tree(self.exploration, self.heuristic_weight, board)
             x = board.play_move(move, color)
-            assert x, "x is {}, move is {}, color is {}".format(x, move, color)
             color = opponent(color)
             node = next_node
         if not node.expanded:
             node.expand(board, color)
         
-        assert board.current_player == color
         winner = self.rollout(board, color)
         node.update(winner)
     
@@ -134,7 +139,6 @@ class MCTS:
         Use the rollout policy to play until the end of the game, returning the winner of the game
         +1 if black wins, +2 if white wins, 0 if it is a tie.
         """
-        # TODO: test the speed of this vs the speed when using copy and undo
         while True:
             terminal, winner = board.is_terminal()
             if terminal:
@@ -148,9 +152,8 @@ class MCTS:
         board: GoBoard,
         color: GO_COLOR,
         time_limit: int,
-        use_pattern: bool,
         exploration: float,
-        in_tree_knowledge: bool,
+        heuristic_weight: float
     ) -> GO_POINT:
         """
         Runs all playouts sequentially and returns the most visited move.
@@ -161,14 +164,13 @@ class MCTS:
             sys.stderr.flush()
             self.toplay = color
             self.root = TreeNode(color)
-        self.use_pattern = use_pattern
         self.exploration = exploration
-        self.in_tree_knowledge = in_tree_knowledge
+        self.heuristic_weight = heuristic_weight
 
         if not self.root.expanded:
             self.root.expand(board, color)
 
-        while time.time() - self.solve_start_time < (time_limit - 0.01):
+        while time.time() - self.solve_start_time < (time_limit - 0.03): # TODO: make the time margin of error bigger (or adjust to be correct)
             cboard = board.copy()
             self.search(cboard, color)
 

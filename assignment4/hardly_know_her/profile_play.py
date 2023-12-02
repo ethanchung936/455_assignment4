@@ -17,6 +17,8 @@ def play_game():
     for i in range(num_moves):
         
         con.genmove_cmd(args=[colors[i%2]])
+        
+    con.showboard_cmd([])
 
 
 cProfile.run("play_game()")

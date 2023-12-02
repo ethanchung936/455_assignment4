@@ -354,6 +354,7 @@ class GtpConnection:
                 self.respond(move_as_string.lower())
             else:
                 self.respond()
+            self.engine.update(self.board, format_point(coord))
         except Exception as e:
             self.respond('illegal move: "{} {}" {}'.format(args[0], args[1], str(e)))
 

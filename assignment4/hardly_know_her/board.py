@@ -55,6 +55,7 @@ class GoBoard(object):
         self.black_capture_history = []
         self.white_capture_history = []
         self.move_history = []
+        self.offsets = [1, -1, self.NS, -self.NS, self.NS+1, -(self.NS+1), self.NS-1, -self.NS+1]
 
     def add_two_captures(self, color: GO_COLOR) -> None:
         if color == BLACK:
@@ -162,10 +163,9 @@ class GoBoard(object):
         self.last2_move = self.last_move
         self.last_move = point
         O = opponent(color)
-        offsets = [1, -1, self.NS, -self.NS, self.NS+1, -(self.NS+1), self.NS-1, -self.NS+1]
         # bcs = []
         # wcs = []
-        for offset in offsets:
+        for offset in self.offsets:
             if self.board[point+offset] == O and self.board[point+(offset*2)] == O and self.board[point+(offset*3)] == color:
                 self.board[point+offset] = EMPTY
                 self.board[point+(offset*2)] = EMPTY
@@ -425,8 +425,8 @@ class GoBoard(object):
         heuristic = 0
         captures = 0
         O = opponent(color)
-        offsets = [1, -1, self.NS, -self.NS, self.NS+1, -(self.NS+1), self.NS-1, -self.NS+1]
-        for offset in offsets:
+        
+        for offset in self.offsets:
             if self.board[point+offset] == O and self.board[point+(offset*2)] == O and self.board[point+(offset*3)] == color:
                 captures += 2
 
