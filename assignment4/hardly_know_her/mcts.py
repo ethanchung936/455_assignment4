@@ -84,7 +84,7 @@ class TreeNode:
     
     def update(self, winner: GO_COLOR) -> None:
         self.n_opp_wins += self.color != winner
-        self.n_opp_wins += (winner == 0) / 2
+        self.n_opp_wins -= (winner == 0) / 2
         self.n_visits += 1
         if not self.is_root():
             self.parent.update(winner)
@@ -122,13 +122,11 @@ class MCTS:
         while not node.is_leaf():
             move, next_node = node.select_in_tree(self.exploration, self.heuristic_weight, board)
             x = board.play_move(move, color)
-            assert x, "x is {}, move is {}, color is {}".format(x, move, color)
             color = opponent(color)
             node = next_node
         if not node.expanded:
             node.expand(board, color)
         
-        assert board.current_player == color
         winner = self.rollout(board, color)
         node.update(winner)
     
