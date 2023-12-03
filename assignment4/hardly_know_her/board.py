@@ -13,6 +13,7 @@ The board uses a 1-dimensional representation with padding
 #TEST
 import numpy as np
 from typing import List, Tuple
+import random
 
 from board_base import (
     board_array_size,
@@ -448,5 +449,243 @@ class GoBoard(object):
             else:
                 return 10 ** ((self.white_captures + new_captures) / 2)
         
-        
+    
 
+    def get_rule_moves(self, color):
+        legal_moves = self.get_empty_points()
+        rule_moves = {'Win': [], 'BlockWin': [], 'OpenFour': [], 'OpenThree': [], 'Capture': [], 'Middle': [], 'Other': []}
+        opp_color = opponent(color)
+
+        for move in legal_moves:
+            #Check for win
+            captured = self.play_rules_move(move, color)
+            terminal, winner = self.is_terminal_rules(move)
+            self.undo_rules(move)
+            if terminal and winner == color:
+                rule_moves['Win'].append(move)
+                continue
+
+            #Check for block win
+            self.play_rules_move(move, opp_color)
+            terminal, winner = self.is_terminal_rules(move)
+            self.undo_rules(move)
+            if terminal and winner == opp_color:
+                rule_moves['BlockWin'].append(move)
+                continue
+
+            #Check for Open4/3
+            num = self.get_open_3_or_4(move, color)
+            if num == 3:
+                rule_moves['OpenThree'].append(move)
+                continue
+            elif num == 4:
+                rule_moves['OpenFour'].append(move)
+                continue
+
+            #Check for capture
+            if captured:
+                rule_moves['Capture'].append(move)
+                continue
+
+            #Check if move is a middle square
+            if self.is_in_middle(move):
+                rule_moves['Middle'].append(move)
+                continue
+
+            rule_moves['Other'].append(move)
+        
+        return rule_moves
+    
+    def get_rule_move(self, color):
+        legal_moves = self.get_empty_points()
+        np.random.shuffle(legal_moves)
+        captured = []
+        open_threes = []
+        opp_color = opponent(color)
+
+
+        for move in legal_moves:
+            #Check for win
+            has_captured = self.play_rules_move(move, color)
+            terminal, winner = self.is_terminal_rules(move)
+            self.undo_rules(move)
+            if terminal and winner == color:
+                return move
+            if has_captured:
+                captured.append(move)
+
+        for move in legal_moves:
+            #Check for block win
+            self.play_rules_move(move, opp_color)
+            terminal, winner = self.is_terminal_rules(move)
+            self.undo_rules(move)
+            if terminal and winner == opp_color:
+                return move
+                
+        for move in legal_moves:
+            #Check for Open4
+            num = self.get_open_3_or_4(move, color)
+            if num == 4:
+                return move
+            if num == 3:
+                open_threes.append(move)
+            
+        if open_threes:
+            return open_threes[0]
+
+        #Check for capture
+        if captured:
+            return random.choice(captured)
+        
+        #No other checks to make so return random legal move
+        return legal_moves[0]
+
+    def get_open_3_or_4(self, point, color):
+        neighbors = self._neighbors(point)
+        max_count = 1
+        for i, nb in enumerate(neighbors):
+            if i % 2 == 0:
+                count = 1
+                closed = False
+            if closed:
+                continue
+            neighbor = nb
+            while self.board[neighbor] == color:
+                count += 1
+                neighbor = self._neighbors(neighbor)[i]
+            if self.board[neighbor] != EMPTY:
+                closed = True
+            elif max(max_count, count) > max_count:
+                max_count = count
+                if max_count == 4:
+                    return 4
+               
+        neighbors = self._diag_neighbors(point)
+        for i, nb in enumerate(neighbors):
+            if i % 2 == 0:
+                count = 1
+                closed = False
+            if closed:
+                continue
+            neighbor = nb
+            while self.board[neighbor] == color:
+                count += 1
+                neighbor = self._diag_neighbors(neighbor)[i]
+            if self.board[neighbor] != EMPTY:
+                closed = True
+            elif max(max_count, count) > max_count:
+                max_count = count
+                if max_count == 4:
+                    return 4
+
+        return max_count
+    
+    def is_captured(self, point, color):
+        O = opponent(color)
+        offsets = [1, -1, self.NS, -self.NS, self.NS+1, -(self.NS+1), self.NS-1, -self.NS+1]
+        for offset in offsets:
+            if self.board[point+offset] == O and self.board[point+(offset*2)] == O and self.board[point+(offset*3)] == color:
+                return True
+        return False
+    
+    def is_in_middle(self, point):
+        middle = [27,28,29,35,36,37,43,44,45]
+        if point in middle:
+            return True
+        else:
+            return False
+
+
+    def play_rules_move(self, point: GO_POINT, color: GO_COLOR) -> bool:
+        """
+        Tries to play a move of color on the point.
+        Returns whether or not the point was empty.
+        """
+        # if self.board[point] != EMPTY:
+        #     return False
+        self.board[point] = color
+        # self.current_player = opponent(color)
+        captured = False
+        # self.last2_move = self.last_move
+        # self.last_move = point
+        O = opponent(color)
+        offsets = [1, -1, self.NS, -self.NS, self.NS+1, -(self.NS+1), self.NS-1, -self.NS+1]
+        bcs = []
+        wcs = []
+        for offset in offsets:
+            if self.board[point+offset] == O and self.board[point+(offset*2)] == O and self.board[point+(offset*3)] == color:
+                self.board[point+offset] = EMPTY
+                self.board[point+(offset*2)] = EMPTY
+                if color == BLACK:
+                    self.black_captures += 2
+                    bcs.append(point+offset)
+                    bcs.append(point+(offset*2))
+                    captured = True
+                else:
+                    self.white_captures += 2
+                    wcs.append(point+offset)
+                    wcs.append(point+(offset*2))
+                    captured = True
+        # self.depth += 1
+        self.black_capture_history.append(bcs)
+        self.white_capture_history.append(wcs)
+        # self.move_history.append(point)
+        return captured
+    
+    def undo_rules(self, move):
+        self.board[move] = EMPTY
+        # self.current_player = opponent(self.current_player)
+        # self.depth -= 1
+        bcs = self.black_capture_history.pop()
+        for point in bcs:
+            self.board[point] = WHITE
+            self.black_captures -= 1
+        wcs = self.white_capture_history.pop()
+        for point in wcs:
+            self.board[point] = BLACK
+            self.white_captures -= 1
+        # if len(self.move_history) > 0:
+        #     self.last_move = self.move_history[-1]
+        # if len(self.move_history) > 1:
+        #     self.last2_move = self.move_history[-2]
+
+    def detect_five_in_a_row_rules(self, move) -> GO_COLOR:
+        """
+        Returns BLACK or WHITE if any five in a row is detected for the color
+        EMPTY otherwise.
+        Only checks around the last move for efficiency.
+        """
+        # if self.last_move == NO_POINT or self.last_move == PASS:
+        #     return EMPTY
+        c = self.board[move]
+        for offset in [(1, 0), (0, 1), (1, 1), (1, -1)]:
+            i = 1
+            num_found = 1
+            while self.board[move + i * offset[0] * self.NS + i * offset[1]] == c:
+                i += 1
+                num_found += 1
+            i = -1
+            while self.board[move + i * offset[0] * self.NS + i * offset[1]] == c:
+                i -= 1
+                num_found += 1
+            if num_found >= 5:
+                return c
+        
+        return EMPTY
+
+    def is_terminal_rules(self, move):
+        """
+        Returns: is_terminal, winner
+        If the result is a draw, winner = EMPTY
+        """
+        winner = self.detect_five_in_a_row_rules(move)
+        if winner != EMPTY:
+            return True, winner
+        elif self.get_captures(BLACK) >= 10:
+            return True, BLACK
+        elif self.get_captures(WHITE) >= 10:
+            return True, WHITE
+        elif self.end_of_game():
+            return True, EMPTY
+        else:
+            return False, EMPTY
