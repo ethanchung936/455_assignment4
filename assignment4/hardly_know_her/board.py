@@ -156,8 +156,8 @@ class GoBoard(object):
         Tries to play a move of color on the point.
         Returns whether or not the point was empty.
         """
-        if self.board[point] != EMPTY:
-            return False
+        # if self.board[point] != EMPTY:
+        #     return False
         self.board[point] = color
         self.current_player = opponent(color)
         self.last2_move = self.last_move
@@ -498,7 +498,9 @@ class GoBoard(object):
     
     def get_rule_move(self, color):
         legal_moves = self.get_empty_points()
+        np.random.shuffle(legal_moves)
         captured = []
+        open_threes = []
         opp_color = opponent(color)
 
 
@@ -525,19 +527,18 @@ class GoBoard(object):
             num = self.get_open_3_or_4(move, color)
             if num == 4:
                 return move
-            
-        for move in legal_moves:
-            #Check for Open3
-            num = self.get_open_3_or_4(move, color)
             if num == 3:
-                return move
+                open_threes.append(move)
+            
+        if open_threes:
+            return open_threes[0]
 
         #Check for capture
         if captured:
             return random.choice(captured)
         
         #No other checks to make so return random legal move
-        return random.choice(legal_moves)
+        return legal_moves[0]
 
     def get_open_3_or_4(self, point, color):
         neighbors = self._neighbors(point)
@@ -603,7 +604,7 @@ class GoBoard(object):
         # if self.board[point] != EMPTY:
         #     return False
         self.board[point] = color
-        self.current_player = opponent(color)
+        # self.current_player = opponent(color)
         captured = False
         # self.last2_move = self.last_move
         # self.last_move = point
@@ -633,7 +634,7 @@ class GoBoard(object):
     
     def undo_rules(self, move):
         self.board[move] = EMPTY
-        self.current_player = opponent(self.current_player)
+        # self.current_player = opponent(self.current_player)
         # self.depth -= 1
         bcs = self.black_capture_history.pop()
         for point in bcs:
