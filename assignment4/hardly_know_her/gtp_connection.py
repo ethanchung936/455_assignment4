@@ -412,14 +412,17 @@ class GtpConnection:
     def rule_moves(self, args):
         board_color = args[0].lower()
         color = color_to_int(board_color)
-        rule_moves = self.board.get_rule_moves(color)
-        for key, moves in rule_moves.items():
-           if moves:
-                move_coords = [point_to_coord(move, self.board.size) for move in moves]
-                move_as_string = [format_point(move_coord).lower() for move_coord in move_coords]
-                rule_moves[key] = move_as_string
+        # rule_moves = self.board.get_rule_moves(color)
+        # for key, moves in rule_moves.items():
+        #    if moves:
+        #         move_coords = [point_to_coord(move, self.board.size) for move in moves]
+        #         move_as_string = [format_point(move_coord).lower() for move_coord in move_coords]
+        #         rule_moves[key] = move_as_string
+        move = self.board.get_rule_move(color)
+        move_coords = point_to_coord(move, self.board.size)
+        rule_move = format_point(move_coords).lower() 
         
-        self.respond(rule_moves)
+        self.respond(rule_move)
         
 
 

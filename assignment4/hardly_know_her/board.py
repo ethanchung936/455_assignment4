@@ -13,6 +13,7 @@ The board uses a 1-dimensional representation with padding
 #TEST
 import numpy as np
 from typing import List, Tuple
+import random
 
 from board_base import (
     board_array_size,
@@ -494,7 +495,49 @@ class GoBoard(object):
             rule_moves['Other'].append(move)
         
         return rule_moves
+    
+    def get_rule_move(self, color):
+        legal_moves = self.get_empty_points()
+        captured = []
+        opp_color = opponent(color)
 
+
+        for move in legal_moves:
+            #Check for win
+            has_captured = self.play_rules_move(move, color)
+            terminal, winner = self.is_terminal_rules(move)
+            self.undo_rules(move)
+            if terminal and winner == color:
+                return move
+            if has_captured:
+                captured.append(move)
+
+        for move in legal_moves:
+            #Check for block win
+            self.play_rules_move(move, opp_color)
+            terminal, winner = self.is_terminal_rules(move)
+            self.undo_rules(move)
+            if terminal and winner == opp_color:
+                return move
+                
+        for move in legal_moves:
+            #Check for Open4
+            num = self.get_open_3_or_4(move, color)
+            if num == 4:
+                return move
+            
+        for move in legal_moves:
+            #Check for Open3
+            num = self.get_open_3_or_4(move, color)
+            if num == 3:
+                return move
+
+        #Check for capture
+        if captured:
+            return random.choice(captured)
+        
+        #No other checks to make so return random legal move
+        return random.choice(legal_moves)
 
     def get_open_3_or_4(self, point, color):
         neighbors = self._neighbors(point)
