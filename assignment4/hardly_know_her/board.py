@@ -458,7 +458,7 @@ class GoBoard(object):
         for move in legal_moves:
             #Check for win
             captured = self.play_rules_move(move, color)
-            terminal, winner = self.is_terminal_rules(color)
+            terminal, winner = self.is_terminal_rules(move)
             self.undo_rules(move)
             if terminal and winner == color:
                 rule_moves['Win'].append(move)
@@ -466,7 +466,7 @@ class GoBoard(object):
 
             #Check for block win
             self.play_rules_move(move, opp_color)
-            terminal, winner = self.is_terminal_rules(opp_color)
+            terminal, winner = self.is_terminal_rules(move)
             self.undo_rules(move)
             if terminal and winner == opp_color:
                 rule_moves['BlockWin'].append(move)
@@ -605,7 +605,7 @@ class GoBoard(object):
         # if len(self.move_history) > 1:
         #     self.last2_move = self.move_history[-2]
 
-    def detect_five_in_a_row_rules(self, color) -> GO_COLOR:
+    def detect_five_in_a_row_rules(self, move) -> GO_COLOR:
         """
         Returns BLACK or WHITE if any five in a row is detected for the color
         EMPTY otherwise.
@@ -613,15 +613,15 @@ class GoBoard(object):
         """
         # if self.last_move == NO_POINT or self.last_move == PASS:
         #     return EMPTY
-        c = color
+        c = self.board[move]
         for offset in [(1, 0), (0, 1), (1, 1), (1, -1)]:
             i = 1
             num_found = 1
-            while self.board[self.last_move + i * offset[0] * self.NS + i * offset[1]] == c:
+            while self.board[move + i * offset[0] * self.NS + i * offset[1]] == c:
                 i += 1
                 num_found += 1
             i = -1
-            while self.board[self.last_move + i * offset[0] * self.NS + i * offset[1]] == c:
+            while self.board[move + i * offset[0] * self.NS + i * offset[1]] == c:
                 i -= 1
                 num_found += 1
             if num_found >= 5:
@@ -629,12 +629,12 @@ class GoBoard(object):
         
         return EMPTY
 
-    def is_terminal_rules(self, color):
+    def is_terminal_rules(self, move):
         """
         Returns: is_terminal, winner
         If the result is a draw, winner = EMPTY
         """
-        winner = self.detect_five_in_a_row_rules(color)
+        winner = self.detect_five_in_a_row_rules(move)
         if winner != EMPTY:
             return True, winner
         elif self.get_captures(BLACK) >= 10:
