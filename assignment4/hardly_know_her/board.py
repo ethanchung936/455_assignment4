@@ -156,8 +156,8 @@ class GoBoard(object):
         Tries to play a move of color on the point.
         Returns whether or not the point was empty.
         """
-        if self.board[point] != EMPTY:
-            return False
+        # if self.board[point] != EMPTY:
+        #     return False
         self.board[point] = color
         self.current_player = opponent(color)
         self.last2_move = self.last_move
