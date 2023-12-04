@@ -34,6 +34,8 @@ class A4SubmissionPlayer(GoEngine):
         """
         GoEngine.__init__(self, "Go0", 1.0)
         self.time_limit = 1
+        self.exploration = 10
+        self.heuristic_weight = 1
         self.MCTS = MCTS()
         
     def reset(self) -> None:
@@ -49,8 +51,8 @@ class A4SubmissionPlayer(GoEngine):
         """
         Implement for assignment 4
         """
-        exploration = 10
-        heuristic_weight = 1
+        exploration = self.exploration
+        heuristic_weight = self.heuristic_weight
         
         point = self.MCTS.get_move(board, color, self.time_limit, exploration, heuristic_weight)
         coord = point_to_coord(point, board.size)
@@ -60,6 +62,12 @@ class A4SubmissionPlayer(GoEngine):
 
     def set_time_limit(self, time_limit):
         self.time_limit = time_limit
+        
+    def set_exploration_weight(self, val):
+        self.exploration = val
+        
+    def set_heuristic_weight(self, val):
+        self.heuristic_weight = val
 
 def run() -> None:
     """

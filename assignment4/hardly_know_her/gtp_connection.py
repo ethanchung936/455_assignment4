@@ -76,7 +76,9 @@ class GtpConnection:
             "solve": self.solve_cmd,
             "heuristic_move": self.test_heuristic,
             "heuristic": self.test_heuristic_moves,
-            "policy": self.rule_moves
+            "policy": self.rule_moves,
+            "e_val": self.set_exploration_weight,
+            "h_val": self.set_heuristic_weight
 
         }
 
@@ -425,6 +427,13 @@ class GtpConnection:
         
         self.respond(rule_move)
         
+    def set_exploration_weight(self, args):
+        self.engine.set_exploration_weight(int(args[0]))
+        self.respond()
+        
+    def set_heuristic_weight(self, args):
+        self.engine.set_heuristic_weight(int(args[0]))
+        self.respond()       
 
 
 def point_to_coord(point: GO_POINT, boardsize: int) -> Tuple[int, int]:
