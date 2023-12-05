@@ -12,14 +12,17 @@ import numpy as np
 import os, sys
 from typing import Dict, List, Tuple
 import time
+from math import sqrt, log
+from random import choice
 
 # Original uct
-# def uct(child_wins: int, child_visits: int, parent_visits: int, exploration: float, heuristic: float, heuristic_weight: float) -> float:
-#     return child_wins / child_visits + exploration * np.sqrt(np.log(parent_visits) / child_visits) + ((heuristic_weight / (child_visits + 1)) * heuristic)
+def uct(child_wins: int, child_visits: int, parent_visits: int, exploration: float, heuristic: float, heuristic_weight: float) -> float:
+    return child_wins / child_visits + exploration * sqrt(log(parent_visits) / child_visits) + ((heuristic_weight / (child_visits + 1)) * heuristic)
 
 # Simplified uct
-def uct(child_wins: int, child_visits: int, parent_visits: int, exploration: float, heuristic: float, heuristic_weight: float) -> float:
-    return child_wins / child_visits + exploration / (child_visits + 1) + ((heuristic_weight / (child_visits + 1)) * heuristic)
+# def uct(child_wins: int, child_visits: int, parent_visits: int, exploration: float, heuristic: float, heuristic_weight: float) -> float:
+#     return child_wins / child_visits + exploration / (child_visits + 1) + ((heuristic_weight / (child_visits + 1)) * heuristic)
+
 class TreeNode:
     """
     A node in the MCTS tree
@@ -143,9 +146,9 @@ class MCTS:
             terminal, winner = board.is_terminal()
             if terminal:
                 return winner   
-            # moves: np.ndarray[GO_POINT] = board.get_empty_points()
-            # np.random.shuffle(moves)     
-            board.play_move(board.get_rule_move(board.current_player), board.current_player)
+            moves: np.ndarray[GO_POINT] = board.get_empty_points()
+            move = choice(moves)
+            board.play_move(move, board.current_player)
     
     def get_move(
         self,
