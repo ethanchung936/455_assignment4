@@ -101,10 +101,10 @@ class GoBoard(object):
         b.board = np.copy(self.board)
         b.black_captures = self.black_captures
         b.white_captures = self.white_captures
-        b.depth = self.depth
-        b.black_capture_history = self.black_capture_history.copy()
-        b.white_capture_history = self.white_capture_history.copy()
-        b.move_history = self.move_history.copy()
+        # b.depth = self.depth
+        # b.black_capture_history = self.black_capture_history.copy()
+        # b.white_capture_history = self.white_capture_history.copy()
+        # b.move_history = self.move_history.copy()
         return b
 
     def get_color(self, point: GO_POINT) -> GO_COLOR:
