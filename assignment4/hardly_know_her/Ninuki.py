@@ -51,8 +51,9 @@ class A4SubmissionPlayer(GoEngine):
         """
         exploration = 0.5
         heuristic_weight = 1
+        rave_const = 300
         
-        point = self.MCTS.get_move(board, color, self.time_limit, exploration, heuristic_weight)
+        point = self.MCTS.get_move(board, color, self.time_limit, exploration, heuristic_weight, rave_const)
         coord = point_to_coord(point, board.size)
         move = format_point(coord)
         self.MCTS.print_pi(board) # TODO: remove this call when done testing

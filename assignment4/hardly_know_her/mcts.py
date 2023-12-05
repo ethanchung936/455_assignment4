@@ -34,6 +34,8 @@ class TreeNode:
         self.n_visits: int = 0
         self.n_opp_wins: float = 0
         self.h_val: int = None
+        self.rave_wins: float = 0
+        self.rave_visits: float = 0
         self.parent: 'TreeNode' = self
         self.children: Dict[TreeNode] = {}
         self.expanded: bool = False
@@ -58,7 +60,7 @@ class TreeNode:
         # self.children[PASS] = node
         self.expanded = True
     
-    def select_in_tree(self, exploration: float, heuristic_weight: float, board: GoBoard) -> Tuple[GO_POINT, 'TreeNode']:
+    def select_in_tree(self, exploration: float, heuristic_weight: float, rave_const: float, board: GoBoard) -> Tuple[GO_POINT, 'TreeNode']:
         """
         Select move among children that gives maximizes UCT. 
         If number of visits are zero for a node, value for that node is infinite, so definitely will get selected
@@ -74,9 +76,14 @@ class TreeNode:
                 return child.move, child
             if child.h_val == None:
                 child.h_val = board.compute_confront_heuristic(child.move, child.color)
+                
+            alpha = max(0, (rave_const - child.n_visits) / rave_const)
             uct_val = uct(child.n_opp_wins, child.n_visits, self.n_visits, exploration, child.h_val, heuristic_weight)
-            if uct_val > _uct_val:
-                _uct_val = uct_val
+            amaf_val = child.rave_wins / child.rave_visits if child.rave_visits != 0 else 0
+            total_val = (1 - alpha) * uct_val + alpha * amaf_val
+            
+            if total_val > _uct_val:
+                _uct_val = total_val
                 _child = child
         return _child.move, _child
     
@@ -89,12 +96,25 @@ class TreeNode:
                 best_child = child
         return best_child.move, best_child
     
-    def update(self, winner: GO_COLOR) -> None:
-        self.n_opp_wins += self.color != winner
-        self.n_opp_wins -= (winner == 0) / 2
+    def update(self, winner: GO_COLOR, black_rave_pts, white_rave_pts) -> None:
+        reward = self.color != winner
+        reward -= (winner == 0) / 2
+        self.n_opp_wins += reward
         self.n_visits += 1
+        
+        if self.color == BLACK:
+            for point in white_rave_pts:
+                if point in self.children:
+                    self.children[point].rave_wins += reward
+                    self.children[point].rave_visits += 1
+        else:
+            for point in black_rave_pts:
+                if point in self.children:
+                    self.children[point].rave_wins += reward
+                    self.children[point].rave_visits += 1
+        
         if not self.is_root():
-            self.parent.update(winner)
+            self.parent.update(winner, black_rave_pts, white_rave_pts)
     
     def is_leaf(self) -> bool:
         """
@@ -127,15 +147,15 @@ class MCTS:
         if not node.expanded:
             node.expand(board, color)
         while not node.is_leaf():
-            move, next_node = node.select_in_tree(self.exploration, self.heuristic_weight, board)
+            move, next_node = node.select_in_tree(self.exploration, self.heuristic_weight, self.rave_const, board)
             x = board.play_move(move, color)
             color = opponent(color)
             node = next_node
         if not node.expanded:
             node.expand(board, color)
         
-        winner = self.rollout(board, color)
-        node.update(winner)
+        winner, black_rave_pts, white_rave_pts = self.rollout(board, color)
+        node.update(winner, black_rave_pts, white_rave_pts)
     
     def rollout(self, board: GoBoard, color: GO_COLOR) -> GO_COLOR:
         """
@@ -145,10 +165,22 @@ class MCTS:
         while True:
             terminal, winner = board.is_terminal()
             if terminal:
-                return winner   
+                break 
             moves: np.ndarray[GO_POINT] = board.get_empty_points()
-            move = choice(moves)
-            board.play_move(move, board.current_player)
+            board.play_move(choice(moves), board.current_player)
+            
+        black_rave_pts = []
+        white_rave_pts = []
+
+        for x in range(board.maxpoint): # TODO: see if this can be more efficient by skipping borders
+                if board.board[x] == BLACK:
+                    black_rave_pts.append(x)
+                elif board.board[x] == WHITE:
+                    white_rave_pts.append(x)
+                
+        return winner, black_rave_pts, white_rave_pts
+            
+        
     
     def get_move(
         self,
@@ -156,7 +188,8 @@ class MCTS:
         color: GO_COLOR,
         time_limit: int,
         exploration: float,
-        heuristic_weight: float
+        heuristic_weight: float,
+        rave_const: float
     ) -> GO_POINT:
         """
         Runs all playouts sequentially and returns the most visited move.
@@ -169,6 +202,7 @@ class MCTS:
             self.root = TreeNode(color)
         self.exploration = exploration
         self.heuristic_weight = heuristic_weight
+        self.rave_const = rave_const
 
         if not self.root.expanded:
             self.root.expand(board, color)
@@ -212,4 +246,5 @@ class MCTS:
                 s = "{:5}".format(pi[r,c])
                 sys.stderr.write(s)
             sys.stderr.write("\n")
+        sys.stderr.write("\n")
         sys.stderr.flush()
